@@ -97,10 +97,10 @@ namespace WowPacketParser.Misc
 
         public Vector3 ReadPackedVector3()
         {
-            int packed = ReadInt32();
-            float x = ((packed & 0x7FF) << 21 >> 21)*0.25f;
-            float y = ((((packed >> 11) & 0x7FF) << 21) >> 21)*0.25f;
-            float z = ((packed >> 22 << 22) >> 22)*0.25f;
+            uint packed = ReadUInt32();
+            float x = ((int)((packed & 0x7FF) << 21) >> 21) * 0.25f;
+            float y = ((int)(packed >> 11 << 21) >> 21)*0.25f;
+            float z = ((int)(packed >> 22 << 22) >> 22)*0.25f;
             return new Vector3(x, y, z);
         }
 
