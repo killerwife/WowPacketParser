@@ -328,7 +328,7 @@ namespace WowPacketParser.SQL.Builders
                         if (spellList.Item1.Id % 10 == 6)
                         {
                             var creatureTemplate = creatureTemplatesDb.Where(p => p.Data.Entry == (spellList.Item1.Id / 100)).SingleOrDefault();
-                            if (creatureTemplate != null || creatureTemplate.Data.DifficultyEntry1 != 0)
+                            if (creatureTemplate != null && creatureTemplate.Data.DifficultyEntry1 != 0)
                             {
                                 spellList.Item1.Id = (int)creatureTemplate.Data.DifficultyEntry1 * 100 + 5;
                                 var split = spellList.Item1.Comments.Split('-');
