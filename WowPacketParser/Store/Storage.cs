@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.Store.Objects;
+using WowPacketParser.Store.Objects.Data;
 
 namespace WowPacketParser.Store
 {
@@ -2560,6 +2561,7 @@ namespace WowPacketParser.Store
         public static readonly DataBag<UiMapLocaleHotfix343> UiMapHotfixesLocale343 = new DataBag<UiMapLocaleHotfix343>(new List<SQLOutput> { SQLOutput.hotfixes });
         public static readonly DataBag<UnitPowerBarLocaleHotfix340> UnitPowerBarHotfixesLocale340 = new DataBag<UnitPowerBarLocaleHotfix340>(new List<SQLOutput> { SQLOutput.hotfixes });
         public static readonly DataBag<WmoAreaTableLocaleHotfix340> WmoAreaTableHotfixesLocale340 = new DataBag<WmoAreaTableLocaleHotfix340>(new List<SQLOutput> { SQLOutput.hotfixes });
+        public static readonly Dictionary<uint, CreatureStatsAndResists> CreatureStats = new Dictionary<uint, CreatureStatsAndResists>();
 
         // Cataclysm Classic Hotfixes Locales
         public static readonly DataBag<AchievementLocaleHotfix440> AchievementHotfixesLocale440 = new DataBag<AchievementLocaleHotfix440>(new List<SQLOutput> { SQLOutput.hotfixes });

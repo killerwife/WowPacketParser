@@ -293,7 +293,7 @@ namespace WowPacketParserModule.V11_0_0_55666.Parsers
                         if ((updateTypeFlag & 0x0020) != 0)
                         {
                             var unit = obj as Unit;
-                            var data = handler.ReadUpdateUnitData(fieldsData, index);
+                            var data = handler.ReadUpdateUnitData(fieldsData, 0, 0, 0, index);
                             if (unit is { UnitData: IMutableUnitData mut })
                                 mut.UpdateData(data);
                             else if (unit != null)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using WowPacketParser.Enums;
@@ -375,8 +376,8 @@ namespace WowPacketParser.SQL.Builders
         [BuilderMethod]
         public static string CreatureSpellLists()
         {
-            if (Storage.CreatureSpellLists.IsEmpty())
-                return string.Empty;
+            //if (Storage.CreatureSpellLists.IsEmpty())
+            //    return string.Empty;
 
             if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_spell_list))
                 return string.Empty;
@@ -454,6 +455,85 @@ namespace WowPacketParser.SQL.Builders
                     }
                 }
             }
+
+            Dictionary<uint, (UInt32 Level, UInt32 UnitClass, Int32[] Stats)> cls = new();
+            Dictionary<uint, (UInt32 Entry, Int32[] Resistances)> resists = new();
+            Dictionary<(uint, uint), (UInt32 Entry, float Multiplier, float Variance, float MinDamage, float MaxDamage, uint speed, float calcMin, float calcMax, float attackPower, float sniffedAttackPower, uint level, uint unitClass)> meleeDamage = new();
+
+            // LOAD CLS FROM DB FOR MELEE
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "Stats.txt")))
+            {
+                foreach (var data in Storage.CreatureStats)
+                {
+                    outputFile.Write(data.Value.ToString(StoreGetters.GetName(StoreNameType.Unit, (int)data.Value.Entry, false)));
+                    if (!cls.ContainsKey(data.Value.Level * 100 + data.Value.Class))
+                        cls.Add(data.Value.Level * 100 + data.Value.Class, ( 
+                            data.Value.Level,
+                            data.Value.Class,
+                            data.Value.Stats
+                        ));
+
+                    if (!resists.ContainsKey(data.Value.Entry) && data.Value.Resistances.Skip(1).Any(p => p != 0))
+                        resists.Add(data.Value.Entry, (
+                            data.Value.Entry,
+                            data.Value.Resistances
+                        ));
+                }
+            }
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "cls.txt")))
+                foreach (var data in cls)
+                    outputFile.WriteLine("UPDATE creature_template_classlevelstats SET Strength=" + data.Value.Stats[0] + ", Agility=" + data.Value.Stats[1] + ", Stamina=" + data.Value.Stats[2] + ", Intellect=" + data.Value.Stats[3] + ", Spirit=" + data.Value.Stats[4] + " WHERE Level=" + data.Value.Level + " AND Class=" + data.Value.UnitClass + ";");
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "resists.txt")))
+                foreach (var data in resists)
+                    outputFile.WriteLine("UPDATE creature_template SET ResistanceHoly=" + data.Value.Resistances[1] + ", ResistanceFire=" + data.Value.Resistances[2] + ", ResistanceNature=" + data.Value.Resistances[3] + ", ResistanceFrost=" + data.Value.Resistances[4] + ", ResistanceShadow=" + data.Value.Resistances[5] + ", ResistanceArcane=" + data.Value.Resistances[6] + " WHERE Entry=" + data.Value.Entry + ";");
+
+            if (Settings.TargetedProject == TargetedProject.Cmangos)
+            {
+                if (Settings.TargetedDatabase == TargetedDatabase.TheBurningCrusade)
+                {
+                    var clsDb = SQLDatabase.Get<CreatureTemplateClassLevelStatsCmangosTbc>();
+                    foreach (var data in Storage.CreatureStats)
+                    {
+                        if (data.Value.MinDamage != 0 && data.Value.MaxDamage != 0)
+                        {
+                            float multi, variance;
+                            var clsEntry = clsDb.SingleOrDefault(p => p.Data.Level == data.Value.Level && p.Data.Class == data.Value.Class);
+                            if (clsEntry == null)
+                                continue;
+                            /*
+mainMinDmg = ((cCLS->BaseDamage * cinfo->DamageVariance) + (cCLS->BaseMeleeAttackPower / 14.0f)) * (cinfo->MeleeBaseAttackTime / 1000.0f) * damageMulti;
+mainMaxDmg = ((cCLS->BaseDamage * cinfo->DamageVariance * 1.5f) + (cCLS->BaseMeleeAttackPower / 14.0f)) * (cinfo->MeleeBaseAttackTime / 1000.0f) * damageMulti;
+                             */
+
+                            float attackPower = data.Value.AttackPower;
+                            if (attackPower == 0)
+                                attackPower = clsEntry.Data.BaseMeleeAttackPower;
+
+                            float baseDmg = ((clsEntry.Data.BaseDamageExp0 * 1));
+                            float attackPowerBoostedDmg = (baseDmg + (attackPower / 14.0f)) * 1;
+
+                            multi = (data.Value.MaxDamage + data.Value.MinDamage) / (attackPowerBoostedDmg * 2);
+                            variance = (data.Value.MaxDamage - data.Value.MinDamage) / multi / baseDmg;
+
+                            float roundedMulti = MathF.Round(multi, 2);
+                            float roundedVariance = MathF.Round(variance, 2);
+
+                            float calcMin = ((clsEntry.Data.BaseDamageExp0 - clsEntry.Data.BaseDamageExp0 * roundedVariance / 2) + (attackPower / 14.0f)) * roundedMulti;
+                            float calcMax = ((clsEntry.Data.BaseDamageExp0 + clsEntry.Data.BaseDamageExp0 * roundedVariance / 2) + (attackPower / 14.0f)) * roundedMulti;
+
+                            if (!meleeDamage.ContainsKey((data.Value.Entry, data.Value.Level)))
+                                meleeDamage.Add((data.Value.Entry, data.Value.Level), (data.Value.Entry, MathF.Round(multi, 1), MathF.Round(variance, 1), data.Value.MinDamage, data.Value.MaxDamage, data.Value.MeleeBaseAttackTime, calcMin, calcMax, data.Value.AttackPower, clsEntry.Data.BaseMeleeAttackPower, data.Value.Level, data.Value.Class));
+                        }
+                    }
+                }
+            }
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "meleeDamage.txt")))
+                foreach (var data in meleeDamage)
+                    outputFile.WriteLine("UPDATE creature_template SET DamageMultiplier=" + data.Value.Multiplier + ", DamageVariance=" + data.Value.Variance + ", MinMeleeDmg=" + data.Value.MinDamage + ", MaxMeleeDmg=" + data.Value.MaxDamage + " WHERE Entry=" + data.Value.Entry + "; -- Speed: " + data.Value.speed + " CalcMin: " + data.Value.calcMin + " CalcMax: " + data.Value.calcMax + " SniffedAP: " + data.Value.attackPower + " DBAP: " + data.Value.sniffedAttackPower + " Level: " + data.Value.level + " Class: " + data.Value.unitClass);
 
             return SQLUtil.Compare(Storage.CreatureSpellLists, templatesDb, StoreNameType.None);
         }
