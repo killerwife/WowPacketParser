@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.PacketStructures;
@@ -181,7 +182,7 @@ namespace WowPacketParserModule.V3_4_4_59817.Parsers
                                     if ((updateTypeFlag & 0x0020) != 0)
                                     {
                                         var unit = obj as Unit;
-                                        var data = handler.ReadUpdateUnitData(fieldsData, i);
+                                        var data = handler.ReadUpdateUnitData(fieldsData, obj.Guid.GetEntry(), unit != null ? (uint)unit.UnitData.Level.Value : 0u, unit != null ? (uint)unit.UnitData.ClassId.Value : 0u, i);
                                         if (unit is { UnitData: IMutableUnitData mut })
                                             mut.UpdateData(data);
                                         else if (unit != null)

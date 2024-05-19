@@ -1,4 +1,5 @@
-﻿using WowPacketParser.Enums;
+﻿using System;
+using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.Store.Objects.UpdateFields;
 
@@ -61,7 +62,7 @@ namespace WowPacketParser.Parsing.Parsers
             return null;
         }
 
-        public virtual IUnitData ReadUpdateUnitData(Packet packet, params object[] indexes)
+        public virtual IUnitData ReadUpdateUnitData(Packet packet, uint entry, uint level, uint classId, params object[] indexes)
         {
             return null;
         }
