@@ -985,7 +985,7 @@ namespace WowPacketParserModule.V9_0_1_36216.UpdateFields.V9_0_1_36216
             return data;
         }
 
-        public override IUnitData ReadUpdateUnitData(Packet packet, params object[] indexes)
+        public override IUnitData ReadUpdateUnitData(Packet packet, uint entry, uint level, uint classId, params object[] indexes)
         {
             var data = new UnitData();
             var rawChangesMask = new int[7];

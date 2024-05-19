@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using WowPacketParser.Enums;
@@ -9,6 +10,7 @@ using WowPacketParser.Hotfix;
 using WowPacketParser.Misc;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
+using static Grpc.Core.Metadata;
 
 namespace WowPacketParser.SQL.Builders
 {
@@ -381,6 +383,40 @@ namespace WowPacketParser.SQL.Builders
                     }
                 }
             }
+
+            Dictionary<uint, (UInt32 Level, UInt32 UnitClass, Int32[] Stats)> cls = new();
+            Dictionary<uint, (UInt32 Entry, Int32[] Resistances)> resists = new();
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "Stats.txt")))
+            {
+                foreach (var data in Storage.CreatureStats)
+                {
+                    if (data.Value.Stats[0] == 0 || data.Value.Entry == 26125)
+                        continue;
+
+                    outputFile.Write(data.Value.ToString(StoreGetters.GetName(StoreNameType.Unit, (int)data.Value.Entry, false)));
+                    if (!cls.ContainsKey(data.Value.Level * 100 + data.Value.Class))
+                        cls.Add(data.Value.Level * 100 + data.Value.Class, ( 
+                            data.Value.Level,
+                            data.Value.Class,
+                            data.Value.Stats
+                        ));
+
+                    if (!resists.ContainsKey(data.Value.Entry) && data.Value.Resistances.Skip(1).Any(p => p != 0))
+                        resists.Add(data.Value.Entry, (
+                            data.Value.Entry,
+                            data.Value.Resistances
+                        ));
+                }
+            }
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "cls.txt")))
+                foreach (var data in cls)
+                    outputFile.WriteLine("UPDATE creature_template_classlevelstats SET Strength=" + data.Value.Stats[0] + ", Agility=" + data.Value.Stats[1] + ", Stamina=" + data.Value.Stats[2] + ", Intellect=" + data.Value.Stats[3] + ", Spirit=" + data.Value.Stats[4] + " WHERE Level=" + data.Value.Level + " AND Class=" + data.Value.UnitClass + ";");
+
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "resists.txt")))
+                foreach (var data in resists)
+                    outputFile.WriteLine("UPDATE creature_template SET ResistanceHoly=" + data.Value.Resistances[1] + ", ResistanceFire=" + data.Value.Resistances[2] + ", ResistanceNature=" + data.Value.Resistances[3] + ", ResistanceFrost=" + data.Value.Resistances[4] + ", ResistanceShadow=" + data.Value.Resistances[5] + ", ResistanceArcane=" + data.Value.Resistances[6] + " WHERE Entry=" + data.Value.Entry + ";");
 
             return SQLUtil.Compare(Storage.CreatureSpellLists, templatesDb, StoreNameType.None);
         }

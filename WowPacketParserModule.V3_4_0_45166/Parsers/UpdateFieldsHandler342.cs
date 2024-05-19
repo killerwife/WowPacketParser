@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using WowPacketParser.Enums;
@@ -742,7 +743,7 @@ namespace WowPacketParserModule.V3_4_0_45166.UpdateFields.V3_4_2_50129
             return data;
         }
 
-        public override IUnitData ReadUpdateUnitData(Packet packet, params object[] indexes)
+        public override IUnitData ReadUpdateUnitData(Packet packet, uint entry, uint level, uint classId, params object[] indexes)
         {
             var data = new UnitData();
             var rawChangesMask = new int[7];

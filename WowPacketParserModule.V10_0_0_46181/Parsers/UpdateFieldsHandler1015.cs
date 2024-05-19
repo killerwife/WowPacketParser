@@ -996,7 +996,7 @@ namespace WowPacketParserModule.V10_0_0_46181.UpdateFields.V10_1_5_50232
             return data;
         }
 
-        public override IUnitData ReadUpdateUnitData(Packet packet, params object[] indexes)
+        public override IUnitData ReadUpdateUnitData(Packet packet, uint entry, uint level, uint classId, params object[] indexes)
         {
             var data = new UnitData();
             packet.ResetBitReader();
