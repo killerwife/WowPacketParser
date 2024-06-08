@@ -212,10 +212,13 @@ namespace WowPacketParserModule.V8_0_1_27101.Parsers
             packet.AddValue("CalculatedSpeedXY", speedXY, indexes);
         }
 
-        public static void ReadMovementMonsterSpline(Packet packet, Vector3 pos, params object[] indexes)
+        public static void ReadMovementMonsterSpline(Packet packet, Vector3 pos, WowGuid guid, params object[] indexes)
         {
             PacketMonsterMove monsterMove = packet.Holder.MonsterMove;
-            CreatureMovement movement = new CreatureMovement();
+            CreatureMovement movement = new CreatureMovement()
+            {
+                GUID = guid
+            };
             monsterMove.Id = packet.ReadUInt32("Id", indexes);
             if (ClientVersion.RemovedInVersion(ClientBranch.Retail, ClientVersionBuild.V10_2_0_52038) || ClientVersion.Branch != ClientBranch.Retail)
             {
@@ -240,10 +243,11 @@ namespace WowPacketParserModule.V8_0_1_27101.Parsers
         public static void HandleOnMonsterMove(Packet packet)
         {
             PacketMonsterMove monsterMove = packet.Holder.MonsterMove = new();
-            monsterMove.Mover = packet.ReadPackedGuid128("MoverGUID");
+            var moverGuid = packet.ReadPackedGuid128("MoverGUID");
+            monsterMove.Mover = moverGuid;
             Vector3 pos = monsterMove.Position = packet.ReadVector3("Position");
 
-            ReadMovementMonsterSpline(packet, pos, "MovementMonsterSpline");
+            ReadMovementMonsterSpline(packet, pos, moverGuid, "MovementMonsterSpline");
         }
 
         [Parser(Opcode.SMSG_PHASE_SHIFT_CHANGE)]
