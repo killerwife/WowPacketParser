@@ -1452,6 +1452,14 @@ namespace WowPacketParserModule.V5_5_0_61735.UpdateFields.V1_15_8_63829
                     }
                 }
             }
+
+            if (stats != null && entry != 0 && !Storage.CreatureStats.ContainsKey(entry * 100 + level))
+            {
+                stats.Entry = entry;
+                stats.Level = level;
+                stats.Class = classId;
+                Storage.CreatureStats.Add(entry * 100 + level, stats);
+            }
             return data;
         }
 

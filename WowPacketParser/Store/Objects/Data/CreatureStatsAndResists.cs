@@ -15,6 +15,8 @@ namespace WowPacketParser.Store.Objects.Data
         public float MaxDamage { get; set; }
         public float MinOffhandDamage { get; set; }
         public float MaxOffhandDamage { get; set; }
+        public UInt32 MeleeBaseAttackTime { get; set; }
+        public UInt32 MeleeOffAttackTime { get; set; }
 
         public string ToString(string creatureName)
         {
@@ -25,6 +27,10 @@ namespace WowPacketParser.Store.Objects.Data
             output += "Resistances:" + " Armor " + Resistances[0] + " Holy " + Resistances[1] + " Fire " + Resistances[2] + " Nature " + Resistances[3] + " Frost " + Resistances[4] + " Shadow " + Resistances[5] + " Arcane " + Resistances[6] + "\n";
             output += "AttackPower: " + AttackPower + "\n";
             output += "RangedAttackPower: " + RangedAttackPower + "\n";
+            output += "MinDamage: " + MinDamage + "\n";
+            output += "MaxDamage: " + MaxDamage + "\n";
+            output += "MinOffhandDamage: " + MinOffhandDamage + "\n";
+            output += "MaxOffhandDamage: " + MaxOffhandDamage + "\n";
             return output;
         }
     }

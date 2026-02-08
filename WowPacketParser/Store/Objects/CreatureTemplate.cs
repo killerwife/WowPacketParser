@@ -283,4 +283,19 @@ namespace WowPacketParser.Store.Objects
         [DBFieldName("HeroicEntry")]
         public uint DifficultyEntry1;
     }
+
+    [DBTableName("creature_template_classlevelstats")]
+    public sealed record CreatureTemplateClassLevelStatsCmangosTbc : IDataModel
+    {
+        [DBFieldName("Level", true)]
+        public sbyte Level;
+        [DBFieldName("Class", true)]
+        public sbyte Class;
+        [DBFieldName("BaseDamageExp0")]
+        public float BaseDamageExp0;
+        [DBFieldName("BaseDamageExp1")]
+        public float BaseDamageExp1;
+        [DBFieldName("BaseMeleeAttackPower")]
+        public float BaseMeleeAttackPower;
+    }
 }

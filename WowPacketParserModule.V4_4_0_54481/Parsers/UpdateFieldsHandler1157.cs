@@ -8,6 +8,8 @@ using System.Linq;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.Parsing.Parsers;
+using WowPacketParser.Store;
+using WowPacketParser.Store.Objects.Data;
 using WowPacketParser.Store.Objects.UpdateFields;
 
 namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
@@ -1023,6 +1025,10 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                     rawChangesMask[i] = (int)packet.ReadBits(32);
             var changesMask = new BitArray(rawChangesMask);
 
+            CreatureStatsAndResists stats = null;
+            if (Storage.CreatureStats.ContainsKey(entry * 100 + level))
+                stats = Storage.CreatureStats[entry * 100 + level];
+
             if (changesMask[0])
             {
                 if (changesMask[1])
@@ -1240,7 +1246,7 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                 }
                 if (changesMask[44])
                 {
-                    packet.ReadUInt32("UNK", indexes);
+                    data.Flags4 = packet.ReadUInt32("Flags4", indexes);
                 }
                 if (changesMask[45])
                 {
@@ -1277,18 +1283,34 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                 if (changesMask[53])
                 {
                     data.MinDamage = packet.ReadSingle("MinDamage", indexes);
+                    if (data.MinDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MinDamage != 0)
+                        stats.MinDamage = data.MinDamage.Value;
                 }
                 if (changesMask[54])
                 {
                     data.MaxDamage = packet.ReadSingle("MaxDamage", indexes);
+                    if (data.MaxDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MaxDamage != 0)
+                        stats.MaxDamage = data.MaxDamage.Value;
                 }
                 if (changesMask[55])
                 {
                     data.MinOffHandDamage = packet.ReadSingle("MinOffHandDamage", indexes);
+                    if (data.MinOffHandDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MinOffHandDamage != 0)
+                        stats.MinOffhandDamage = data.MinOffHandDamage.Value;
                 }
                 if (changesMask[56])
                 {
                     data.MaxOffHandDamage = packet.ReadSingle("MaxOffHandDamage", indexes);
+                    if (data.MaxOffHandDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MaxOffHandDamage != 0)
+                        stats.MaxOffhandDamage = data.MaxOffHandDamage.Value;
                 }
                 if (changesMask[57])
                 {
@@ -1318,13 +1340,13 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                 {
                     data.PetExperience = packet.ReadUInt32("PetExperience", indexes);
                 }
-                if (changesMask[64])
+            }
+            if (changesMask[64])
+            {
+                if (changesMask[65])
                 {
                     data.PetNextLevelExperience = packet.ReadUInt32("PetNextLevelExperience", indexes);
                 }
-            }
-            if (changesMask[65])
-            {
                 if (changesMask[66])
                 {
                     data.ModCastingSpeed = packet.ReadSingle("ModCastingSpeed", indexes);
@@ -1392,6 +1414,10 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                 if (changesMask[82])
                 {
                     data.AttackPower = packet.ReadInt32("AttackPower", indexes);
+                    if (data.AttackPower != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.AttackPower != 0)
+                        stats.AttackPower = data.AttackPower.Value;
                 }
                 if (changesMask[83])
                 {
@@ -1445,13 +1471,13 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                 {
                     data.HoverHeight = packet.ReadSingle("HoverHeight", indexes);
                 }
-                if (changesMask[96])
+            }
+            if (changesMask[96])
+            {
+                if (changesMask[97])
                 {
                     data.MinItemLevelCutoff = packet.ReadInt32("MinItemLevelCutoff", indexes);
                 }
-            }
-            if (changesMask[97])
-            {
                 if (changesMask[98])
                 {
                     data.MinItemLevel = packet.ReadInt32("MinItemLevel", indexes);
@@ -1595,6 +1621,14 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                     {
                         data.StatNegBuff[i] = packet.ReadInt32("StatNegBuff", indexes, i);
                     }
+
+                    if (data.Stats[i] != null)
+                    {
+                        if (data.Stats[i] != 0 && stats == null)
+                            stats = new CreatureStatsAndResists();
+                        if (data.Stats[i] - (data.StatPosBuff[i] != null ? data.StatPosBuff[i] : 0) + (data.StatNegBuff[i] != null ? data.StatNegBuff[i] : 0) != 0)
+                            stats.Stats[i] = data.Stats[i].Value - (data.StatPosBuff[i] != null ? data.StatPosBuff[i].Value : 0) + (data.StatNegBuff[i] != null ? data.StatNegBuff[i].Value : 0);
+                    }
                 }
             }
             if (changesMask[193])
@@ -1604,24 +1638,36 @@ namespace WowPacketParserModule.V4_4_0_54481.UpdateFields.V1_15_7_60000
                     if (changesMask[194 + i])
                     {
                         data.Resistances[i] = packet.ReadInt32("Resistances", indexes, i);
+                        if (data.Resistances[i] != 0 && stats == null)
+                            stats = new CreatureStatsAndResists();
+                        if (data.Resistances[i] != 0)
+                            stats.Resistances[i] = data.Resistances[i].Value;
                     }
-                    if (changesMask[201 + i])
+                    if (changesMask[200 + i])
                     {
                         data.ResistanceBuffModsPositive[i] = packet.ReadInt32("ResistanceBuffModsPositive", indexes, i);
                     }
-                    if (changesMask[208 + i])
+                    if (changesMask[207 + i])
                     {
                         data.ResistanceBuffModsNegative[i] = packet.ReadInt32("ResistanceBuffModsNegative", indexes, i);
                     }
-                    if (changesMask[215 + i])
+                    if (changesMask[214 + i])
                     {
                         data.PowerCostModifier[i] = packet.ReadInt32("PowerCostModifier", indexes, i);
                     }
-                    if (changesMask[222 + i])
+                    if (changesMask[221 + i])
                     {
                         data.PowerCostMultiplier[i] = packet.ReadSingle("PowerCostMultiplier", indexes, i);
                     }
                 }
+            }
+
+            if (stats != null && entry != 0 && !Storage.CreatureStats.ContainsKey(entry * 100 + level))
+            {
+                stats.Entry = entry;
+                stats.Level = level;
+                stats.Class = classId;
+                Storage.CreatureStats.Add(entry * 100 + level, stats);
             }
             return data;
         }

@@ -9,6 +9,7 @@ using WowPacketParser.Parsing;
 using WowPacketParser.Proto;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
+using WowPacketParser.Store.Objects.Data;
 using WowPacketParser.Store.Objects.UpdateFields;
 using WowPacketParserModule.V6_0_2_19033.Enums;
 using CoreFields = WowPacketParser.Enums.Version;
@@ -189,6 +190,15 @@ namespace WowPacketParserModule.V3_4_4_59817.Parsers
                                             unit.UnitData = data;
 
                                         updateValues.Fields.UpdateData(data);
+
+                                        if (unit != null && unit.UnitData != null && unit.UnitData.Level != null && Storage.CreatureStats.ContainsKey(guid.GetEntry() * 100 + (uint)unit.UnitData.Level.Value))
+                                        {
+                                            CreatureStatsAndResists stats = Storage.CreatureStats[guid.GetEntry() * 100 + (uint)unit.UnitData.Level.Value];
+                                            if (unit.UnitData.AttackRoundBaseTime[0] != null)
+                                                stats.MeleeBaseAttackTime = unit.UnitData.AttackRoundBaseTime[0].Value;
+                                            if (unit.UnitData.AttackRoundBaseTime[1] != null)
+                                                stats.MeleeOffAttackTime = unit.UnitData.AttackRoundBaseTime[1].Value;
+                                        }
                                     }
                                     if ((updateTypeFlag & 0x0040) != 0)
                                         handler.ReadUpdatePlayerData(fieldsData, i);

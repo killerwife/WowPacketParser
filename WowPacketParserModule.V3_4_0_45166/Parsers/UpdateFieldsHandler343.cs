@@ -1024,18 +1024,34 @@ namespace WowPacketParserModule.V3_4_0_45166.UpdateFields.V3_4_3_51666
                 if (changesMask[52])
                 {
                     data.MinDamage = packet.ReadSingle("MinDamage", indexes);
+                    if (data.MinDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MinDamage != 0)
+                        stats.MinDamage = data.MinDamage.Value;
                 }
                 if (changesMask[53])
                 {
                     data.MaxDamage = packet.ReadSingle("MaxDamage", indexes);
+                    if (data.MaxDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MaxDamage != 0)
+                        stats.MaxDamage = data.MaxDamage.Value;
                 }
                 if (changesMask[54])
                 {
                     data.MinOffHandDamage = packet.ReadSingle("MinOffHandDamage", indexes);
+                    if (data.MinOffHandDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MinOffHandDamage != 0)
+                        stats.MinOffhandDamage = data.MinOffHandDamage.Value;
                 }
                 if (changesMask[55])
                 {
                     data.MaxOffHandDamage = packet.ReadSingle("MaxOffHandDamage", indexes);
+                    if (data.MaxOffHandDamage != 0 && stats == null)
+                        stats = new CreatureStatsAndResists();
+                    if (data.MaxOffHandDamage != 0)
+                        stats.MaxOffhandDamage = data.MaxOffHandDamage.Value;
                 }
                 if (changesMask[56])
                 {
